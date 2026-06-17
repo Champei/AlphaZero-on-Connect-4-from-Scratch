@@ -1548,8 +1548,20 @@ def combined_loss(predicted_log_probs, predicted_values, target_policy, target_v
     }
     return total_loss, parts
 
-# Step 47 - encode_batch_states (not yet solved)
-# TODO: implement
+# Step 47 - encode_batch_states
+def encode_batch_states(boards, to_play):
+    # TODO: encode each (board, to_play) and stack into a (B, C, 6, 7) float tensor
+    batch_channels = []
+    
+    for board, current_player in zip(boards, to_play):
+        opponent = 3 - current_player
+        channel1 = (board == current_player).astype(np.float32)
+        channel2 = (board == opponent).astype(np.float32)
+        
+        channels = np.stack([channel1, channel2], axis=0)
+        batch_channels.append(channels)
+        
+    return torch.tensor(np.array(batch_channels), dtype=torch.float32)
 
 # Step 48 - iterate_minibatches (not yet solved)
 # TODO: implement
