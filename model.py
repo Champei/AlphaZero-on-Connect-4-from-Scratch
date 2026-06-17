@@ -1575,8 +1575,45 @@ def iterate_minibatches(buffer, batch_size, seed=None):
         yo=indices[idx : idx + batch_size]
         yield [buffer[i] for i in yo]
 
-# Step 49 - training_step (not yet solved)
-# TODO: implement
+# Step 49 - training_step
+import torch
+import torch.nn.functional as F
+import numpy as np
+
+def training_step(net, optimizer, minibatch, policy_weight=1.0, value_weight=1.0, l2_weight=1e-4):
+    optimizer.zero_grad()
+
+    boards = [sample['board'] for sample in minibatch]
+    to_plays = [sample['to_play'] for sample in minibatch]
+
+    device = next(net.parameters()).device
+    states = encode_batch_states(boards, to_plays).to(device)
+
+    target_policies = torch.tensor(np.array([sample['policy'] for sample in minibatch]), dtype=torch.float32, device=device)
+    target_values = torch.tensor(np.array([[sample['value']] for sample in minibatch]), dtype=torch.float32, device=device)
+
+    policy_logits, value_predictions = net(states)
+
+    boards_arr = np.array(boards)
+    legal_mask = torch.tensor(boards_arr[:, 0, :] == 0, dtype=torch.bool, device=device)
+    masked_logits = policy_logits.masked_fill(~legal_mask, float('-inf'))
+    log_probs = F.log_softmax(masked_logits, dim=1)
+
+    total_loss, parts = combined_loss(
+        log_probs, value_predictions, target_policies, target_values, net,
+        policy_weight=policy_weight, value_weight=value_weight, l2_weight=l2_weight
+    )
+
+    total_loss.backward()
+    torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm=1.0)
+    optimizer.step()
+
+    return {
+        'total': total_loss.item(),
+        'policy': parts['policy'].item(),
+        'value': parts['value'].item(),
+        'l2': parts['l2'].item() if l2_weight > 0 else 0.0
+    }
 
 # Step 50 - training_epoch (not yet solved)
 # TODO: implement
