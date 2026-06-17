@@ -1529,11 +1529,17 @@ def policy_loss_cross_entropy(predicted_log_probs, target_policy):
 # Step 45 - l2_regularization_loss
 def l2_regularization_loss(net):
     # TODO: return the sum of squared L2 norms of all trainable parameters in net
-    losses=[torch.sum(p**2) for p in net.parameters() if p.requires_grad]
-    return sum(losses) if losses else torch.tensor(0.0,requires_grad=True)
+    losses = [torch.sum(p ** 2) for p in net.parameters() if p.requires_grad]
+    return torch.stack(losses).sum() if losses else torch.tensor(0.0, requires_grad=True)
 
-# Step 46 - combined_loss (not yet solved)
-# TODO: implement
+# Step 46 - combined_loss
+def combined_loss(predicted_log_probs, predicted_values, target_policy, target_values, net, policy_weight=1.0, value_weight=1.0, l2_weight=1e-4):
+    # TODO: combine policy CE, value MSE, and L2 reg into a single weighted training loss.
+    p_loss = policy_loss_cross_entropy(predicted_log_probs, target_policy)
+    v_loss = value_loss_mse(predicted_values, target_values)
+    l2_loss = l2_regularization_loss(net)
+    
+    return p_loss*policy_weight + v_loss*value_weight + l2_loss*l2_weight
 
 # Step 47 - encode_batch_states (not yet solved)
 # TODO: implement
