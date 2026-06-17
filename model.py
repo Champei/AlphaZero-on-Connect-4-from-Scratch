@@ -1484,8 +1484,32 @@ def assign_value_targets(history, winner):
         
     return annotated_history
 
-# Step 42 - generate_self_play_batch (not yet solved)
-# TODO: implement
+# Step 42 - generate_self_play_batch
+import numpy as np
+
+def generate_self_play_batch(net, num_games, num_simulations, c_puct, temperature=1.0):
+    ans = []
+
+    for _ in range(num_games):
+        history, winner = play_self_play_game(net, num_simulations, c_puct, temperature)
+
+        for step in history:
+            state = step['board']
+            policy = step['policy']
+            to_play = step['to_play']
+
+            value = 0.0 if winner == 0 else (1.0 if winner == to_play else -1.0)
+            board_2d = np.asarray(state)
+            policy_1d = np.asarray(policy).flatten()
+
+            ans.append({
+                'board': board_2d,
+                'policy': policy_1d,
+                'to_play': to_play,
+                'value': value
+            })
+
+    return ans
 
 # Step 43 - value_loss_mse (not yet solved)
 # TODO: implement
