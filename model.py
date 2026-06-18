@@ -1744,8 +1744,21 @@ def greedy_agent_action(net, state, to_play):
     
     return legal_indices[best_idx]
 
-# Step 55 - play_one_match (not yet solved)
-# TODO: implement
+# Step 55 - play_one_match
+def play_one_match(agent_one, agent_two, starting_player=1):
+    board = make_empty_board()
+    current_player = starting_player
+
+    while True:
+        agent = agent_one if current_player == 1 else agent_two
+
+        column = agent(board, current_player)
+        board, done, winner, current_player = step_env(
+            board, column, current_player
+        )
+
+        if done:
+            return winner
 
 # Step 56 - match_win_rate (not yet solved)
 # TODO: implement
