@@ -1782,6 +1782,49 @@ def match_win_rate(agent_one, agent_two, num_matches, alternate_starts=True):
     
     return stats
 
-# Step 57 - evaluate_against_random (not yet solved)
-# TODO: implement
+# Step 57 - evaluate_against_random
+def evaluate_against_random(net, num_matches, seed=None):
+    # TODO: play num_matches between greedy net agent and a seeded random baseline
+    
+    if seed is not None:
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+    
+    wins = 0
+    losses = 0
+    draws = 0
+    
+    for match_idx in range(num_matches):
+        board = make_empty_board()
+        current_player = 1
+        done = False
+        
+        go = (match_idx % 2 == 0)
+        
+        while not done:
+            if (current_player == 1 and go) or \
+               (current_player == 2 and not go):
+                action = greedy_agent_action(net, board, current_player)
+            else:
+                legal_moves = valid_moves(board)
+                action = np.random.choice(legal_moves)
+            
+            board, next_player, reward, done = step_env(board, current_player, action)
+            current_player = next_player
+            
+            if not done:
+                done = is_terminal(board)
+        
+        if (reward == 1 and go) or (reward == -1 and not go):  
+            wins += 1
+        elif (reward == -1 and go) or (reward == 1 and not go):  
+            losses += 1
+        else:  
+            draws += 1
+            
+    return {
+        'wins': wins,
+        'losses': losses,
+        'draws': draws,
+    }
 
