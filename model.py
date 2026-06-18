@@ -1615,8 +1615,35 @@ def training_step(net, optimizer, minibatch, policy_weight=1.0, value_weight=1.0
         'l2': parts['l2'].item() if l2_weight > 0 else 0.0
     }
 
-# Step 50 - training_epoch (not yet solved)
-# TODO: implement
+# Step 50 - training_epoch
+def training_epoch(net, optimizer, buffer, batch_size, policy_weight=1.0, value_weight=1.0, l2_weight=1e-4, seed=None):
+    # TODO: run one shuffled pass over the buffer and return the mean of each loss component.
+    epoch_total_loss = 0.0
+    epoch_policy_loss = 0.0
+    epoch_value_loss = 0.0
+    epoch_l2_loss = 0.0
+    num_batches = 0
+
+    for batch in iterate_minibatches(buffer, batch_size, seed):
+        losses = training_step(
+            net, optimizer, batch, policy_weight, value_weight, l2_weight
+        )
+        
+        epoch_total_loss += losses["total"]
+        epoch_policy_loss += losses["policy"]
+        epoch_value_loss += losses["value"]
+        epoch_l2_loss += losses["l2"]
+        num_batches += 1
+
+    if num_batches == 0:
+        return {"total": 0.0, "policy": 0.0, "value": 0.0, "l2": 0.0}
+
+    return {
+        "total": epoch_total_loss / num_batches,
+        "policy": epoch_policy_loss / num_batches,
+        "value": epoch_value_loss / num_batches,
+        "l2": epoch_l2_loss / num_batches
+    }
 
 # Step 51 - self_play_iteration (not yet solved)
 # TODO: implement
