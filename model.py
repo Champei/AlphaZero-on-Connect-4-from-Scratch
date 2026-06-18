@@ -1702,8 +1702,47 @@ def random_policy_action(state, to_play, rng=None):
         
     return int(random.choice(legal_actions))
 
-# Step 54 - greedy_agent_action (not yet solved)
-# TODO: implement
+# Step 54 - greedy_agent_action
+def greedy_agent_action(net, state, to_play):
+    # TODO: run one forward pass and return the argmax legal column for to_play.
+
+    if not isinstance(state, torch.Tensor):
+        state = torch.tensor(state, dtype=torch.float32)
+    
+    if state.dim() == 2:  
+        state_input = torch.stack([
+            (state == 1).float(),  
+            (state == 2).float()   
+        ], dim=0).unsqueeze(0)  
+    elif state.dim() == 3 and state.shape[0] == 2:
+        state_input = state.unsqueeze(0)
+    else:
+        state_input = state
+    
+    with torch.no_grad():
+        policy_logits, _ = net(state_input)
+    
+    policy_logits = policy_logits.squeeze(0)
+    
+    if state.dim() == 2:
+        board = state
+    elif state.dim() == 3 and state.shape[0] == 2:
+        board = state[0] * 1 + state[1] * 2
+    else:
+        board = state.squeeze()
+        if board.dim() == 3 and board.shape[0] == 2:
+            board = board[0] * 1 + board[1] * 2
+    
+    legal_mask = (board[0, :] == 0)
+    legal_indices = torch.where(legal_mask)[0].tolist()
+    
+    if not legal_indices:
+        return -1
+    
+    legal_logits = policy_logits[legal_indices]
+    best_idx = torch.argmax(legal_logits).item()
+    
+    return legal_indices[best_idx]
 
 # Step 55 - play_one_match (not yet solved)
 # TODO: implement
